@@ -28,7 +28,7 @@ def scan_apps
     next unless File.exist?(appInfoFile)
     begin
       applist.push parseAppInfo app, appInfoFile
-      # puts "检查本地App: #{appInfoFile}"
+      # puts "Checking local App: #{appInfoFile}"
     rescue StandardError
       next
     end
@@ -52,7 +52,7 @@ def main
   ret = %x{csrutil status}.chomp
   # System Integrity Protection status: disabled.
   if ret.include?("status: enabled")
-    # puts "给老子把你那个b SIP关了先！是不是关SIP犯法？\n要求里写了要先关SIP，能不能认真看看我写的说明？\n如果你看了还没关，说明你确实是SB\n如果你没看说明，那你更SB。\nWhatever，U ARE SB。"
+    # puts "Turn off your SIP first! Is it illegal to turn off SIP?\nI've written that you should turn off SIP first. Can you read my instructions carefully?\nIf you've read them and still haven't turned it off, you're really a SB\nIf you haven't read the instructions, then you're more SB.\nWhatever, U ARE SB."
     # return
   end
 
@@ -62,16 +62,15 @@ def main
   appList = config['AppList']
   procVersion = config['Version']
 
-  puts "====\t自动注入开始执行\t====\n"
-  puts "====\tVersion(版本号): #{procVersion}\t====\n"
+  puts "====\tAutomatic Injection Started\t====\n"
+  puts "====\tVersion: #{procVersion}\t====\n"
   puts "====\tAutomatic Inject Script Checking... ====\n"
-  puts "====\tDesign By QiuChenly(github.com/qiuchenly)"
-  puts "注入时请根据提示输入'y' 或者按下回车键跳过这一项。\n"
-  puts "When i find useful options, pls follow my prompts enter 'y' or press enter key to jump that item.\n"
+  puts "====\tDesigned By QiuChenly(github.com/qiuchenly)"
+  puts "When prompted, enter 'y' or press the Enter key to skip the current item.\n"
 
   install_apps = scan_apps
 
-  #prepare resolve package lst
+  # Prepare resolve package list
   appLst = []
   appList.each do |app|
     packageName = app['packageName']
@@ -107,9 +106,8 @@ def main
     end
 
     if localApp.empty?
-      puts "[🔔] 此App包不是常见类型结构，请注意当前App注入的路径是 #{appBaseLocate}"
-      puts "[🔔] This App Folder is not common struct,pls attention now inject into the app path is #{appBaseLocate}"
-      # puts "读取的是 #{appBaseLocate + "/Contents/Info.plist"}"
+      puts "[🔔] This App package has an uncommon structure. Please note that the current App injection path is #{appBaseLocate}"
+      # puts "Reading: #{appBaseLocate + "/Contents/Info.plist"}"
       localApp.push(parseAppInfo appBaseLocate, appBaseLocate + "/Contents/Info.plist")
     end
 
@@ -120,28 +118,24 @@ def main
     bridgeFile = basePublicConfig['bridgeFile'] if bridgeFile.nil?
 
     unless checkCompatible(supportVersion, supportSubVersion, localApp['CFBundleShortVersionString'], localApp['CFBundleVersion'])
-      puts "[😅] [#{localApp['CFBundleName']}] - [#{localApp['CFBundleShortVersionString']}] - [#{localApp['CFBundleIdentifier']}]不是受支持的版本，跳过注入😋。\n"
+      puts "[😅] [#{localApp['CFBundleName']}] - [#{localApp['CFBundleShortVersionString']}] - [#{localApp['CFBundleIdentifier']}] is not a supported version, skipping injection😋.\n"
       next
     end
 
-    puts "[🤔] [#{localApp['CFBundleName']}] - [#{localApp['CFBundleShortVersionString']}] - [#{localApp['CFBundleIdentifier']}]是受支持的版本，是否需要注入？y/n(默认n)\n"
+    puts "[🤔] [#{localApp['CFBundleName']}] - [#{localApp['CFBundleShortVersionString']}] - [#{localApp['CFBundleIdentifier']}] is a supported version. Do you want to inject? y/n (default n)\n"
     action = gets.chomp
     next if action != 'y'
-    puts "开始注入App: #{packageName}"
+    puts "Start injecting App: #{packageName}"
 
     dest = appBaseLocate + bridgeFile + injectFile
     backup = dest + "_backup"
 
     if File.exist? backup
-      puts "备份的原始文件已经存在,需要直接用这个文件注入吗？y/n(默认y)\n"
-      puts "Find Previous Target File Backup, Are u use it inject？y/n(default is y)\n"
+      puts "The backup file already exists. Do you want to use this file for injection? y/n (default y)\n"
       action = gets.chomp
-      # action = 'y'
       if action == 'n'
         FileUtils.remove(backup)
         FileUtils.copy(dest, backup)
-      else
-
       end
     else
       FileUtils.copy(dest, backup)
@@ -149,9 +143,8 @@ def main
 
     current = Pathname.new(File.dirname(__FILE__)).realpath
     current = Shellwords.escape(current)
-    # set shell +x permission
+    # Set shell +x permission
     sh = "chmod +x #{current}/tool/insert_dylib"
-    # puts sh
     system sh
     backup = Shellwords.escape(backup)
     dest = Shellwords.escape(dest)
@@ -161,7 +154,6 @@ def main
         system "sudo cp #{current}/tool/libInjectLib.dylib #{Shellwords.escape(appBaseLocate + bridgeFile)}libInjectLib.dylib"
         sh = "sudo #{current}/tool/insert_dylib #{Shellwords.escape(appBaseLocate + bridgeFile)}libInjectLib.dylib #{backup} #{dest}"
     end
-    # puts sh
     system sh
 
     signPrefix = "codesign -f -s - --timestamp=none --all-architectures"
@@ -175,9 +167,9 @@ def main
       signPrefix = "#{signPrefix} --entitlements #{current}/tool/#{entitlements}"
     end
 
-    # 签名目标文件 如果加了--deep 会导致签名整个app
+    # Sign target file. If --deep is added, it will sign the entire app.
     if noSignTarget.nil?
-      puts "开始签名..."
+      puts "Start signing..."
       system "#{signPrefix} #{dest}"
     end
 
@@ -194,7 +186,7 @@ def main
        system "#{signPrefix} #{Shellwords.escape(appBaseLocate)}"
     end
 
-    puts "App处理完成。"
+    puts "App processing completed."
   }
 end
 

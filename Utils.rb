@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-# 检查文件是否存在
-# 参数:
-#   file_path 文件路径
-# 返回值:
-#   是否存在
+# Check if a file exists.
+# Parameters:
+#   file_path: File path
+# Returns:
+#   Boolean indicating whether the file exists.
 def file_exist?(file_path)
   File.exist?(file_path)
 end
-
